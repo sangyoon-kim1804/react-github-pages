@@ -1,0 +1,57 @@
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
+    let myKey = "1GYVhGf7izv7S-O-5eOCx2gfisd2d-GN7LhpBJaLRtOc"; // 스프레드시트 KEY
+    let data = [];
+    google.charts.load("current", { packages: ["corechart"] }).then(() => {
+        let query = new google.visualization.Query(
+            `http://spreadsheets.google.com/tq?key=${myKey}&pub=1`
+        );
+        
+        query.send((response) => {
+            if (response.isError()) {
+                console.error("Error in query: " + response.getMessage() + " " + response.getDetailedMessage() );
+                return;
+            }
+            let dataTable = response.getDataTable().toJSON();
+            let jsonData = JSON.parse(dataTable);
+            let cols = jsonData.cols.map((col) => col.label);
+            let rows = jsonData.rows.map((row) => {
+                let newRow;
+                row.c.forEach((obj, index) => {
+                    if (obj == null || obj == undefined) return; //빈값이 경우 정지
+                    obj[cols[index]] = "f" in obj ? obj["f"] : obj["v"];
+                    ["f", "v"].forEach((each) => delete obj[each]);
+                    newRow = { ...newRow, ...obj };
+                });
+                return newRow;
+            });
+            var html = '';
+            html += '{\n';
+            html += '"txt": {\n';
+            rows.map((row,index) => {
+                if (index == rows.length-1 ) {
+                    html += '"' + row.key + '": "' + row.eng + '" \n';
+                } else {
+                    html += '"' + row.key + '": "' + row.eng + '", \n';
+                }
+            });
+            html += '}\n';
+            html += '}';
+            var obj_s = JSON.stringify(data); 
+            $("#json_output").html(html);
+            
+            const name = 'language.json';
+            const a = document.createElement('a');
+            const type = name.split(".").pop();
+            a.href = URL.createObjectURL( new Blob([html], { type:`text/${type === "txt" ? "plain" : type}` }) );
+            a.download = name;
+            a.click();
+        });
+    });
+</script>
+<html>
+<body>
+    <pre id="json_output"></pre>
+</body>
+</html>
