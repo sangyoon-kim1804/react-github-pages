@@ -1,5 +1,6 @@
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
 <script>
     let myKey = "1GYVhGf7izv7S-O-5eOCx2gfisd2d-GN7LhpBJaLRtOc"; // 스프레드시트 KEY
     let data = [];
@@ -41,17 +42,108 @@
             var obj_s = JSON.stringify(data); 
             $("#json_output").html(html);
             
+            var table = "";
+            rows.map((row,index) => {
+                table += "<tr>";
+                table += "<td class='text-center'>" + (index+1) + "</td>";
+                table += "<td class='text-center'>" + (row.confirm=='TRUE'?'O':'') + "</td>";
+                table += "<td>" + row.key + "</td>";
+                table += "<td>" + (row.kor==undefined?'':row.kor) + "</td>";
+                table += "<td>" + row.eng + "</td>";
+                table += "<td>" + (row.comment==null?'':row.comment) + "</td>";
+                table += "</tr>";
+            });
+            $("#table tbody").html(table);
+            /*
             const name = 'language.json';
             const a = document.createElement('a');
             const type = name.split(".").pop();
             a.href = URL.createObjectURL( new Blob([html], { type:`text/${type === "txt" ? "plain" : type}` }) );
             a.download = name;
             a.click();
+            */
         });
     });
+    function fn_download() {
+        google.charts.load("current", { packages: ["corechart"] }).then(() => {
+            let query = new google.visualization.Query(
+                `http://spreadsheets.google.com/tq?key=${myKey}&pub=1`
+            );
+            
+            query.send((response) => {
+                if (response.isError()) {
+                    console.error("Error in query: " + response.getMessage() + " " + response.getDetailedMessage() );
+                    return;
+                }
+                let dataTable = response.getDataTable().toJSON();
+                let jsonData = JSON.parse(dataTable);
+                let cols = jsonData.cols.map((col) => col.label);
+                let rows = jsonData.rows.map((row) => {
+                    let newRow;
+                    row.c.forEach((obj, index) => {
+                        if (obj == null || obj == undefined) return; //빈값이 경우 정지
+                        obj[cols[index]] = "f" in obj ? obj["f"] : obj["v"];
+                        ["f", "v"].forEach((each) => delete obj[each]);
+                        newRow = { ...newRow, ...obj };
+                    });
+                    return newRow;
+                });
+                var html = '';
+                html += '{\n';
+                html += '"txt": {\n';
+                rows.map((row,index) => {
+                    if (index == rows.length-1 ) {
+                        html += '"' + row.key + '": "' + row.eng + '" \n';
+                    } else {
+                        html += '"' + row.key + '": "' + row.eng + '", \n';
+                    }
+                });
+                html += '}\n';
+                html += '}';
+                                
+                const name = 'language.json';
+                const a = document.createElement('a');
+                const type = name.split(".").pop();
+                a.href = URL.createObjectURL( new Blob([html], { type:`text/${type === "txt" ? "plain" : type}` }) );
+                a.download = name;
+                a.click();
+                
+            });
+        });
+    }
 </script>
 <html>
-<body>
-    <pre id="json_output"></pre>
+<style>
+    * {
+        font-size: 12px;
+    }
+</style>
+<button class="btn btn-primary mb-1 float-end" onclick="fn_download()">
+    json 저장
+</button>
+<body class="p-2">
+    <pre id="json_output" style="display: none;"></pre>
+    <table class="table table-bordered" id="table">
+        <colgroup>
+            <col width="80px"/>
+            <col width="80px"/>
+            <col width="120px"/>
+            <col width="400px"/>            
+            <col width="*"/>
+            <col width="400px"/>
+        </colgroup>
+        <thead>
+        <tr class="text-center">
+            <th>번호</th>
+            <th>확정</th>
+            <th>key</th>
+            <th>국문</th>
+            <th>영문</th>
+            <th>코멘트</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
 </body>
 </html>
