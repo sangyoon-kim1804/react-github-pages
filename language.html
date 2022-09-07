@@ -4,72 +4,11 @@
 <script>
     let myKey = "1GYVhGf7izv7S-O-5eOCx2gfisd2d-GN7LhpBJaLRtOc"; // 스프레드시트 KEY
     let data = [];
-    google.charts.load("current", { packages: ["corechart"] }).then(() => {
-        let query = new google.visualization.Query(
-            `http://spreadsheets.google.com/tq?key=${myKey}&pub=1`
-        );
-        
-        query.send((response) => {
-            if (response.isError()) {
-                console.error("Error in query: " + response.getMessage() + " " + response.getDetailedMessage() );
-                return;
-            }
-            let dataTable = response.getDataTable().toJSON();
-            let jsonData = JSON.parse(dataTable);
-            let cols = jsonData.cols.map((col) => col.label);
-            let rows = jsonData.rows.map((row) => {
-                let newRow;
-                row.c.forEach((obj, index) => {
-                    if (obj == null || obj == undefined) return; //빈값이 경우 정지
-                    obj[cols[index]] = "f" in obj ? obj["f"] : obj["v"];
-                    ["f", "v"].forEach((each) => delete obj[each]);
-                    newRow = { ...newRow, ...obj };
-                });
-                return newRow;
-            });
-            var html = '';
-            html += '{\n';
-            html += '"txt": {\n';
-            rows.map((row,index) => {
-                if (index == rows.length-1 ) {
-                    html += '"' + row.key + '": "' + row.eng + '" \n';
-                } else {
-                    html += '"' + row.key + '": "' + row.eng + '", \n';
-                }
-            });
-            html += '}\n';
-            html += '}';
-            var obj_s = JSON.stringify(data); 
-            $("#json_output").html(html);
-            
-            var table = "";
-            rows.map((row,index) => {
-                table += "<tr>";
-                table += "<td class='text-center'>" + (index+1) + "</td>";
-                table += "<td class='text-center'>" + (row.confirm=='TRUE'?'O':'') + "</td>";
-                table += "<td>" + row.key + "</td>";
-                table += "<td>" + (row.kor==undefined?'':row.kor) + "</td>";
-                table += "<td>" + row.eng + "</td>";
-                table += "<td>" + (row.comment==null?'':row.comment) + "</td>";
-                table += "</tr>";
-            });
-            $("#table tbody").html(table);
-            /*
-            const name = 'language.json';
-            const a = document.createElement('a');
-            const type = name.split(".").pop();
-            a.href = URL.createObjectURL( new Blob([html], { type:`text/${type === "txt" ? "plain" : type}` }) );
-            a.download = name;
-            a.click();
-            */
-        });
-    });
-    function fn_download() {
+    function googleSheet(n) {
         google.charts.load("current", { packages: ["corechart"] }).then(() => {
             let query = new google.visualization.Query(
                 `http://spreadsheets.google.com/tq?key=${myKey}&pub=1`
-            );
-            
+            );            
             query.send((response) => {
                 if (response.isError()) {
                     console.error("Error in query: " + response.getMessage() + " " + response.getDetailedMessage() );
@@ -88,29 +27,45 @@
                     });
                     return newRow;
                 });
-                var html = '';
-                html += '{\n';
-                html += '"txt": {\n';
-                rows.map((row,index) => {
-                    if (index == rows.length-1 ) {
-                        html += '"' + row.key + '": "' + row.eng + '" \n';
-                    } else {
-                        html += '"' + row.key + '": "' + row.eng + '", \n';
-                    }
-                });
-                html += '}\n';
-                html += '}';
-                                
-                const name = 'language.json';
-                const a = document.createElement('a');
-                const type = name.split(".").pop();
-                a.href = URL.createObjectURL( new Blob([html], { type:`text/${type === "txt" ? "plain" : type}` }) );
-                a.download = name;
-                a.click();
-                
+                if (n == 1) {
+                    var table = "";
+                    rows.map((row,index) => {
+                        table += "<tr>";
+                        table += "<td class='text-center'>" + (index+1) + "</td>";
+                        table += "<td class='text-center'>" + (row.confirm=='TRUE'?'O':'') + "</td>";
+                        table += "<td>" + row.key + "</td>";
+                        table += "<td>" + (row.kor==undefined?'':row.kor) + "</td>";
+                        table += "<td>" + row.eng + "</td>";
+                        table += "<td>" + (row.comment==null?'':row.comment) + "</td>";
+                        table += "</tr>";
+                    });
+                    $("#table tbody").html(table);
+                } else {
+                    var html = '';
+                    html += '{\n';
+                    html += '"txt": {\n';
+                    rows.map((row,index) => {
+                        if (index == rows.length-1 ) {
+                            html += '"' + row.key + '": "' + row.eng + '" \n';
+                        } else {
+                            html += '"' + row.key + '": "' + row.eng + '", \n';
+                        }
+                    });
+                    html += '}\n';
+                    html += '}';                    
+                    const name = 'language.json';
+                    const a = document.createElement('a');
+                    const type = name.split(".").pop();
+                    a.href = URL.createObjectURL( new Blob([html], { type:`text/${type === "txt" ? "plain" : type}` }) );
+                    a.download = name;
+                    a.click();
+                }
             });
         });
     }
+    $(function(){
+        googleSheet(1);
+    });
 </script>
 <html>
 <style>
@@ -118,7 +73,7 @@
         font-size: 12px;
     }
 </style>
-<button class="btn btn-primary mb-1 float-end" onclick="fn_download()">
+<button class="btn btn-primary mb-1 float-end" onclick="googleSheet(2)">
     json 저장
 </button>
 <body class="p-2">
