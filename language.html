@@ -33,7 +33,7 @@
                         table += "<tr>";
                         table += "<td class='text-center'>" + (index+1) + "</td>";
                         table += "<td class='text-center'>" + (row.confirm=='TRUE'?'O':'') + "</td>";
-                        table += "<td>" + row.key + "</td>";
+                        table += "<td>" + (row.key==undefined?'':row.key) + "</td>";
                         table += "<td>" + (row.kor==undefined?'':row.kor) + "</td>";
                         table += "<td>" + row.eng + "</td>";
                         table += "<td>" + (row.comment==null?'':row.comment) + "</td>";
